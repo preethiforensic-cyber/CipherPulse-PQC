@@ -96,16 +96,6 @@ A few project names were considered before settling on the final one:
 ### Step 7 — Replace the raw key hand-off with real PQC (Kyber512)
 This was the biggest and most iterative step. Sending the Fernet key directly (Step 4/5) is not post-quantum-safe — the goal was to replace it with a proper *Kyber512 key encapsulation mechanism (KEM), so only a *public key and a KEM ciphertext ever cross the network, never the secret itself.
 
-Getting the right library and the right API took several attempts:
-
-| Attempt | Library / approach  | What went wrong |
-
-| 1       | pqcrypto.kem.kyber512 (generate_keypair, encrypt, decrypt) | Package not available/importable in the environment |
-| 2       | kyber.Kyber512 used as a class with .enc() / .dec() | Wrong package (kyber, not kyber_py) and wrong method names |
-| 3 | kyber_py.kyber.Kyber512() instantiated as an object, .keygen()/.encaps()/.decaps() | kyber_py's Kyber512 is used directly as a class, not instantiated |
-| 4 | Kyber512.keygen()/.encaps()/.decaps() called directly on the class | Return order of encaps() was assumed wrong way round |
-| 5 | Fixed: Kyber512.encaps(pk) returns *(shared_key, ciphertext)* — key first, ciphertext second (not the other way around, which is what every earlier version assumed) | This was the actual bug causing key mismatches |
-| 6 | Added a type-safety check in derive_fernet_key() to force the shared secret into bytes before HKDF, since some early versions returned a list | Fixed intermittent TypeError when deriving the Fernet key |
 
 Final, correct flow (documented directly in pqc_helper.py as a comment so it's never lost again):
 python
