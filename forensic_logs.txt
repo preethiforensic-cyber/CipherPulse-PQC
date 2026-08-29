@@ -1,0 +1,80 @@
+[2026-08-29 17:13:54] Sender: Server
+│  Plaintext  : hiii
+│  Entropy    : 5.2994
+└─ SHA-256    : df113b7cd3154075f667e5b27c2281a701f18dc255e49c6debdc6d52187bf2c0
+--------------------------------------------------
+[2026-08-29 17:13:54] Sender: Server
+│  Plaintext  : hiii
+│  Entropy    : 5.2994
+└─ SHA-256    : df113b7cd3154075f667e5b27c2281a701f18dc255e49c6debdc6d52187bf2c0
+--------------------------------------------------
+[2026-08-29 17:14:02] Sender: Client
+│  Plaintext  : what
+│  Entropy    : 5.3578
+└─ SHA-256    : efd145982d49ccb9da33d931cbc73aa8c1cb3e3a0f68c4438262270a67a80467
+--------------------------------------------------
+[2026-08-29 17:14:02] Sender: Client
+│  Plaintext  : what
+│  Entropy    : 5.3578
+└─ SHA-256    : efd145982d49ccb9da33d931cbc73aa8c1cb3e3a0f68c4438262270a67a80467
+--------------------------------------------------
+[2026-08-29 17:50:52] Sender: Server
+│  Plaintext  : kfkpofi0i0i
+│  Entropy    : 5.3949
+└─ SHA-256    : f972af0e2164eef111fe798c60c56e42daaa41da0cb80fc89dbf3dbcf5aa6a79
+--------------------------------------------------
+[2026-08-29 17:50:52] Sender: Server
+│  Plaintext  : kfkpofi0i0i
+│  Entropy    : 5.3949
+└─ SHA-256    : f972af0e2164eef111fe798c60c56e42daaa41da0cb80fc89dbf3dbcf5aa6a79
+--------------------------------------------------
+[2026-08-29 17:51:03] Sender: Client
+│  Plaintext  : kodoiqiuiuh
+│  Entropy    : 5.3874
+└─ SHA-256    : 76a495252d1059a9668576e866461083380f644492eacf6ec0f6dea19dc2aaac
+--------------------------------------------------
+[2026-08-29 17:51:03] Sender: Client
+│  Plaintext  : kodoiqiuiuh
+│  Entropy    : 5.3874
+└─ SHA-256    : 76a495252d1059a9668576e866461083380f644492eacf6ec0f6dea19dc2aaac
+--------------------------------------------------
+[2026-08-29 17:56:25] Sender: Server
+│  Plaintext  : hiiii
+│  Entropy    : 5.4388
+└─ SHA-256    : a99800a8608c32cef92cd9c0963cf4a3215ec62fb5ef0ce7cebdc657e5f77e23
+--------------------------------------------------
+[2026-08-29 17:56:25] Sender: Server
+│  Plaintext  : hiiii
+│  Entropy    : 5.4388
+└─ SHA-256    : a99800a8608c32cef92cd9c0963cf4a3215ec62fb5ef0ce7cebdc657e5f77e23
+--------------------------------------------------
+[2026-08-29 17:56:36] Sender: Client
+│  Plaintext  : how are you
+│  Entropy    : 5.5657
+└─ SHA-256    : a33ad6c29d8e1e51cd28710a9535338ecf8ccb0b632180c45cc4294f87dc09f1
+--------------------------------------------------
+[2026-08-29 17:56:36] Sender: Client
+│  Plaintext  : how are you
+│  Entropy    : 5.5657
+└─ SHA-256    : a33ad6c29d8e1e51cd28710a9535338ecf8ccb0b632180c45cc4294f87dc09f1
+--------------------------------------------------
+[2026-08-29 18:02:30] Sender: Server
+│  Plaintext  : hiiiii
+│  Entropy    : 5.3447
+└─ SHA-256    : b8f8b1894453df432ef480e74b3045184dc2d744779db681fcd93b3a132ccb0d
+--------------------------------------------------
+[2026-08-29 18:02:30] Sender: Server
+│  Plaintext  : hiiiii
+│  Entropy    : 5.3447
+└─ SHA-256    : b8f8b1894453df432ef480e74b3045184dc2d744779db681fcd93b3a132ccb0d
+--------------------------------------------------
+[2026-08-29 18:02:36] Sender: Client
+│  Plaintext  : hellow
+│  Entropy    : 5.5008
+└─ SHA-256    : 32825d455d1376b24f63b0c45bcc3c6a75c5055fc49ad63c6c203888b95fc7d3
+--------------------------------------------------
+[2026-08-29 18:02:36] Sender: Client
+│  Plaintext  : hellow
+│  Entropy    : 5.5008
+└─ SHA-256    : 32825d455d1376b24f63b0c45bcc3c6a75c5055fc49ad63c6c203888b95fc7d3
+--------------------------------------------------
