@@ -1,309 +1,250 @@
 # CipherPulse-PQC
 
 Post-Quantum Cryptography (PQC) inspired encrypted messaging app with socket programming, real-time payload encoding, and multi-threaded GUI
-# Post-Quantum Secure Chat
+#  Post-Quantum Secure Chat & Forensics Tool
 
-A simple Python chat application built step by step as a Cyber Security / Cyber Forensics mini project. It shows how messages can be encrypted before sending, so that no one in the middle can read them.
-
-This README explains the project in the exact order it was built, with screenshots from each step.
+A Python-based encrypted chat application built as a Cyber Security / Digital Forensics mini project. It demonstrates a *post-quantum key exchange (Kyber512 / ML-KEM)* combined with *AES encryption (Fernet), plus a built-in **forensic logging module* that records entropy and hash values for every message sent.
 
 
-# What This Project Does
 
-- Two users (Server and Client) connect to each other using Python sockets.
-- Every message is encrypted using the cryptography library (Fernet — AES + HMAC) before it is sent.
-- If someone changes even one byte of the encrypted message, it will fail to decrypt.
-- The final version has a simple GUI (built with Tkinter) so both sides can chat like a normal chat app, but everything going through the network is ciphertext, not plain text.
+##  Table of Contents
 
-
-#  Tech Used
-
- Part           |   Tool 
-
- Language       | Python 3 
- Encryption     | cryptography library (Fernet) 
-Networking      | Python socket 
- GUI            | tkinter  
- Threading      | threading (so GUI doesn't freeze while chatting) 
- Environment    | venv 
+- [ Overview](#-overview)
+- [ Tech Stack](#-tech-stack)
+- [ Step-by-Step Build Process](#-step-by-step-build-process)
+- [ Project Structure](#-project-structure)
+- [ Setup & Installation](#-setup--installation)
+- [ How to Run](#️-how-to-run)
+- [ What This Project Proves](#️-what-this-project-proves)
+- [ Threat Model & Known Limitations](#️-threat-model--known-limitations)
+- [ Future Work](#-future-work)
+- [ Author](#-author)
 
 
-#  Step-by-Step Build Process
 
-1. Create the project  (Created a folder named PostQuantumSecureChat on the Desktop, and opened it in the terminal.)
+##  Overview
 
-2. Set up the virtual environment
+Two peers — a *Server* and a *Client* — connect over a TCP socket and exchange messages that are:
 
-3.Enabled script execution and activated the virtual environment in PowerShell:
+1. Protected by a *quantum-resistant key exchange* (Kyber512), so the shared secret itself is never sent in plaintext over the network.
+2. Encrypted with *Fernet (AES + HMAC)* using a key derived from that shared secret via *HKDF-SHA256*.
+3. Logged for *forensic analysis* — every message's ciphertext is run through Shannon entropy and SHA-256 hashing, with a timestamped audit trail written to forensic_logs.txt.
 
+The project ships in two interchangeable forms:
+- *CLI version* — server.py + client.py (terminal based)
+- *GUI version* — gui_chat.py (Tkinter window, single file, mode selectable as Server or Client)
+
+Both versions share the same cryptographic and forensic core in pqc_helper.py.
+
+> * In short:* Server & Client agree on a secret key using quantum-safe math (Kyber512) → that secret becomes an AES key (Fernet) → every message is encrypted with it → every message is also fingerprinted (entropy + SHA-256) and saved to a forensic log file.
+
+
+##  Tech Stack
+
+ Part                      |  Tool
+ Language                  | Python 3 
+ Post-Quantum KEM          | Kyber512 (kyber-py) 
+ Symmetric Encryption      | cryptography library (Fernet — AES + HMAC) 
+ Key Derivation            | HKDF-SHA256 
+ Networking                | Python socket 
+ GUI                       | tkinter 
+ Concurrency               | threading (keeps GUI/CLI responsive while chatting) 
+ Forensics                 | Shannon Entropy + SHA-256 (custom module) 
+ Environment               | venv 
+
+
+
+##  Step-by-Step Build Process
+
+This project was not written in one shot — it grew in stages, with each layer tested before the next was added. Below is the exact build order, including the dead ends that came up along the way (kept here because they're useful for the viva — they explain why the final code looks the way it does).
+
+### Step 1 — Project folder & virtual environment
+Created a PostQuantumSecureChat folder and set up an isolated Python environment:
 powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+python -m venv venv
 .\venv\Scripts\Activate.ps1
 
 
-Once (venv) appeared at the start of the line, the environment was active.
-
- PowerShell showing the execution policy command and successful (venv) activation.
-
-Install the cryptography library
-
-# powershell
-pip install cryptography
-
-
- Terminal showing cryptography, cffi, and pycparser downloading and installing successfully.
-
- Create and test basic encryption (test.py)
-
-Created test.py in Notepad first (Notepad asked to create a new file since it didn't exist yet):
-
- Notepad dialog: "Cannot find test.py. Do you want to create a new file?"
-
-The file used Fernet to generate a key, encrypt a message, and decrypt it back:
-
-# python
+### Step 2 — Prove basic encryption works (test.py)
+Before touching networking, a standalone script confirmed Fernet encryption/decryption worked:
+python
 from cryptography.fernet import Fernet
-
 key = Fernet.generate_key()
 cipher = Fernet(key)
-
 message = b"Post-Quantum Secure Chat Testing!"
 encrypted = cipher.encrypt(message)
 decrypted = cipher.decrypt(encrypted)
 
-print("Key:", key.decode())
-print("Encrypted:", encrypted.decode())
-print("Decrypted Message:", decrypted.decode())
+Output confirmed the message round-tripped correctly.
 
+### Step 3 — Plain (unencrypted) chat first — server.py + client.py
+A bare socket server and client were built first, just to confirm two processes could talk to each other over 127.0.0.1:5000. At this stage messages were sent as *plain text* — no security at all — purely to validate the networking layer in isolation.
 
-# Ran it with python test.py:
+### Step 4 — Add encryption on top — secure_server.py + secure_client.py
+The same socket logic was upgraded: the server generates one Fernet.generate_key() for the session and *sends it directly to the client* right after connecting. Every message after that is encrypted with that shared key. This proved encryption worked over the wire, but it had an obvious weakness — the key itself travels in the clear, so anyone snooping the connection at that exact moment could grab it.
 
- Output showing the generated key, the encrypted text, and the correctly decrypted message: "Post-Quantum Secure Chat Testing!"
+### Step 5 — Wrap it in a GUI — first QuantumChatApp (Tkinter)
+The same "server generates a Fernet key and sends it raw" logic was wrapped in a Tkinter window with *Start as Server* / *Connect as Client* buttons, a scrolling chat log, and a message box — so both sides could chat like a real app instead of a terminal.
 
-This confirmed encryption and decryption were working correctly.
+### Step 6 — Naming the project
+A few project names were considered before settling on the final one:
+- AegisQuantum-Chat
+- CipherPulse-PQC
+- *Post-Quantum Secure Chat & Forensics Tool*  (final)
 
-### Step 5 — Build a basic (unencrypted) chat first — server.py and client.py
+### Step 7 — Replace the raw key hand-off with real PQC (Kyber512)
+This was the biggest and most iterative step. Sending the Fernet key directly (Step 4/5) is not post-quantum-safe — the goal was to replace it with a proper *Kyber512 key encapsulation mechanism (KEM), so only a *public key and a KEM ciphertext ever cross the network, never the secret itself.
 
-Before adding encryption to the chat itself, a plain socket-based server and client were built to confirm the connection works.
+Getting the right library and the right API took several attempts:
 
-Created server.py:
+| Attempt | Library / approach  | What went wrong |
 
- Notepad dialog creating server.py.
+| 1       | pqcrypto.kem.kyber512 (generate_keypair, encrypt, decrypt) | Package not available/importable in the environment |
+| 2       | kyber.Kyber512 used as a class with .enc() / .dec() | Wrong package (kyber, not kyber_py) and wrong method names |
+| 3 | kyber_py.kyber.Kyber512() instantiated as an object, .keygen()/.encaps()/.decaps() | kyber_py's Kyber512 is used directly as a class, not instantiated |
+| 4 | Kyber512.keygen()/.encaps()/.decaps() called directly on the class | Return order of encaps() was assumed wrong way round |
+| 5 | Fixed: Kyber512.encaps(pk) returns *(shared_key, ciphertext)* — key first, ciphertext second (not the other way around, which is what every earlier version assumed) | This was the actual bug causing key mismatches |
+| 6 | Added a type-safety check in derive_fernet_key() to force the shared secret into bytes before HKDF, since some early versions returned a list | Fixed intermittent TypeError when deriving the Fernet key |
 
+Final, correct flow (documented directly in pqc_helper.py as a comment so it's never lost again):
 python
-import socket
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('127.0.0.1', 5000))
-server.listen(1)
-
-print(" Server is waiting for connection...")
-conn, addr = server.accept()
-print(f" Connected by: {addr}")
-
-while True:
-    data = conn.recv(1024).decode()
-    if not data or data.lower() == 'exit':
-        print("Client disconnected.")
-        break
-    print(f" Client says: {data}")
-
-    msg = input("Server response: ")
-    conn.send(msg.encode())
-    if msg.lower() == 'exit':
-        break
-
-conn.close()
+pk, sk   = Kyber512.keygen()
+key, c   = Kyber512.encaps(pk)     # shared KEY comes first, ciphertext second
+key      = Kyber512.decaps(sk, c)  # secret key comes first, ciphertext second
 
 
- server.py code open in the editor.
+### Step 8 — Rebuild pqc_helper.py as the shared crypto + forensics core
+Once the Kyber API was confirmed working, pqc_helper.py became the single source of truth, exposing:
+- generate_kyber_keys(), encapsulate_kyber(), decapsulate_kyber() — the PQC handshake
+- derive_fernet_key() — HKDF-SHA256 turns the Kyber shared secret into a Fernet-compatible AES key
+- calculate_entropy(), calculate_sha256(), generate_hex_dump() — the forensic primitives
+- log_forensics() — ties the above together into one timestamped log entry per message
 
-Created client.py:
+### Step 9 — Rebuild the CLI Server/Client on top of pqc_helper
+server.py and client.py were rewritten to import from pqc_helper instead of doing raw Fernet key hand-off:
+1. Server generates a Kyber keypair and sends the *public key* only.
+2. Client encapsulates a shared secret against that public key and sends back the *ciphertext* only.
+3. Server decapsulates to arrive at the same shared secret.
+4. Both derive the same Fernet key via HKDF and chat normally from there — with log_forensics() called on every message sent and received.
 
- Notepad dialog creating client.py.
+### Step 10 — Forensic logging goes live
+log_forensics(sender, plaintext, ciphertext_bytes) was wired into the receive loop and the send loop on both CLI and GUI versions, so every message — incoming or outgoing — is automatically entropy-checked, hashed, and appended to forensic_logs.txt with a timestamp.
 
-python
-import socket
+### Step 11 — Rebuild the GUI on PQC — pqc_gui_chat.py
+The Tkinter GUI from Step 5 was rewritten to use the new pqc_helper handshake and forensic logging instead of the old raw-key hand-off, with the entropy value now shown inline under each received message bubble.
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('127.0.0.1', 5000))
+### Step 12 — Debugging the GUI build
+A few real bugs came up once the GUI was rebuilt, found and fixed with PowerShell:
+- __init__ typo: an early version had def __init__(self): instead of def __init__(self, root):, so the window never received its parent. Found with:
+  powershell
+  Select-String -Path pqc_gui_chat.py -Pattern "def __init__"
+  
+  and fixed with:
+  powershell
+  (Get-Content pqc_gui_chat.py) -replace 'def __init__\(self\):', 'def __init__(self, root):' | Set-Content pqc_gui_chat.py
+  
+- Geometry string bug*: self.root.geometry("600×500") used the multiplication sign × instead of a plain x — Tkinter needs "WIDTHxHEIGHT" literally, so this was corrected to "600x500".
 
-print(" Connected to Server! (Type 'exit' to quit)")
+### Step 13 — Final hardening pass
+A last round of fixes made the app stable enough for a live demo:
+- SO_REUSEADDR added to the server socket so restarting the app doesn't hit "Address already in use".
+- Receive buffer bumped from 2048 → 4096 bytes, since some Kyber public keys/ciphertexts exceeded the old limit.
+- messagebox calls moved onto the main thread via root.after(0, ...), since popping a dialog from a background thread can freeze or crash Tkinter.
+- A guard added in send_message() so the app can't try to encrypt/send before the handshake has finished (self.cipher is None check).
+- on_close() handler added via root.protocol("WM_DELETE_WINDOW", ...) so both sockets close cleanly when the window is closed, instead of leaving the port stuck.
 
-while True:
-    msg = input("You (Client): ")
-    client.send(msg.encode())
-    if msg.lower() == 'exit':
-        break
+### Step 14 — Forensic module logic, standalone
+log_forensics() was finalized to always write entries in this format:
 
-    response = client.recv(1024).decode()
-    if not response or response.lower() == 'exit':
-        print("Server disconnected.")
-        break
-    print(f" Server says: {response}")
+[2026-08-29 14:32:10] Sender: Client
+│  Plaintext  : Hello, secure world!
+│  Entropy    : 7.8524
+└─ SHA-256    : 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+--------------------------------------------------
 
-client.close()
-
-
- client.py code open in the editor.
-
-At this stage, the two machines could talk to each other, but the messages were sent as plain, unencrypted text.
-
-### Step 6 — Upgrade to encrypted chat — secure_server.py and secure_client.py
-
-Next, encryption was added on top of the same socket logic. The server generates a shared Fernet key and sends it to the client right after connecting; every message after that is encrypted with that key.
-
-Created secure_server.py:
-
- Notepad dialog creating secure_server.py.
-
-python
-import socket
-from cryptography.fernet import Fernet
-
-SHARED_KEY = Fernet.generate_key()
-cipher = Fernet(SHARED_KEY)
-
-print("=" * 50)
-print("🔑 Generated Shared Security Key for Session:")
-print(SHARED_KEY.decode())
-print("=" * 50)
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('127.0.0.1', 5000))
-server.listen(1)
-
-print("\n🔒 Quantum-Safe Server waiting for connection...")
-conn, addr = server.accept()
-print(f"✅ Connected by: {addr}")
-
-conn.send(SHARED_KEY)
-
-while True:
-    encrypted_data = conn.recv(2048)
-    if not encrypted_data:
-        break
-
-    decrypted_msg = cipher.decrypt(encrypted_data).decode()
-    if decrypted_msg.lower() == 'exit':
-        print("Client disconnected.")
-        break
-
-    print(f"\n🔒 [RAW RECEIVED CIPHERTEXT]: {encrypted_data.decode()}")
-    print(f"🔓 [DECRYPTED MESSAGE]: {decrypted_msg}")
-
-    reply = input("\nServer Response: ")
-    encrypted_reply = cipher.encrypt(reply.encode())
-    conn.send(encrypted_reply)
-    if reply.lower() == 'exit':
-        break
-
-conn.close()
+The GUI version also displays the entropy value inline under each received message for a live forensic view.
 
 
-# Created secure_client.py:
 
- Notepad dialog creating secure_client.py (with earlier terminal output from the test.py run and pip install still visible in the background).
-
-python
-import socket
-from cryptography.fernet import Fernet
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('127.0.0.1', 5000))
-
-SHARED_KEY = client.recv(1024)
-cipher = Fernet(SHARED_KEY)
-
-print("=" * 50)
-print("🔑 Received Encrypted Session Key from Server:")
-print(SHARED_KEY.decode())
-print("=" * 50)
-print("✅ Secure Quantum-Resistant Channel Established!\n")
-
-while True:
-    msg = input("You (Client): ")
-    encrypted_msg = cipher.encrypt(msg.encode())
-    client.send(encrypted_msg)
-
-    if msg.lower() == 'exit':
-        break
-
-    encrypted_response = client.recv(2048)
-    if not encrypted_response:
-        break
-
-    decrypted_response = cipher.decrypt(encrypted_response).decode()
-    if decrypted_response.lower() == 'exit':
-        print("Server disconnected.")
-        break
-
-    print(f"🔒 [RAW RECEIVED CIPHERTEXT]: {encrypted_response.decode()}")
-    print(f"🔓 [DECRYPTED MESSAGE]: {decrypted_response}\n")
-
-client.close()
-
-
-Running secure_server.py in one terminal and secure_client.py in another showed the raw ciphertext being received on each side, and the correctly decrypted message printed right below it — confirming the whole chat was now encrypted end to end at the transport level.
-
- Build the GUI version — gui_chat.py
-
-To make it usable like a real chat app, the same encrypted logic was wrapped in a Tkinter GUI with Start as Server and Connect as Client buttons, a chat log, and a message box.
-
-First attempt — the window opened but the chat area was blank and not yet wired up correctly:
-
- Early version of the GUI window, opened but not functioning yet.
-
-After fixing the script and running it properly:
-
- Two GUI windows side by side. Left window (Server) shows "Session Key Generated! Server listening... Connected to Client". Right window (Client) shows "Connecting to Server... Received Session Security Key! Secure Channel Established!".
-
-Finally, sending an actual message between the two windows worked correctly:
-
- Both GUI windows showing the message hellow sent from one side and received (Peer: hellow) on the other, with You: hellow shown locally on the sender's side.
-
-Step 8 — Final project structure
-
-Final folder view showing all files created during the project:
+##  Project Structure
 
 
 PostQuantumSecureChat/
 │
 ├── venv/
-├── client.py
-├── gui_chat.py
-├── secure_client.py
-├── secure_server.py
-├── server.py
-└── test.py
+├── pqc_helper.py     # Kyber512 key exchange + Fernet key derivation + forensic module
+├── gui_chat.py        # Tkinter GUI — Server/Client mode in one app
+├── client.py          # CLI client
+├── server.py           # CLI server
+├── forensic_logs.txt   # Auto-generated forensic audit trail
+└── requirements.txt
 
 
 
 
- How to Run It
+##  Setup & Installation
 
 bash
-1. Set up environment
+# 1. Create and activate a virtual environment
 python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install cryptography
+.\venv\Scripts\Activate.ps1      # PowerShell (Windows)
 
-2. Run the GUI version
+# If script execution is blocked on Windows, run once:
+# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# 2. Install dependencies
+pip install cryptography kyber-py
+
+
+
+
+##  How to Run
+
+### GUI Version (recommended)
+bash
 python gui_chat.py
 
+Open two instances of the app. Click *Start as Server* on one, *Connect as Client* on the other. Once you see "PQC Secure Handshake Successful!", start chatting — every message is end-to-end encrypted and forensically logged in the background.
 
-Click Start as Server on one window, and Connect as Client on another. Once you see "Secure Channel Established!", start chatting.
+### CLI Version
+bash
+# Terminal 1
+python server.py
+
+# Terminal 2
+python client.py
 
 
 
- What This Project Proves
 
-- Messages are encrypted before they leave the sender, and decrypted only after arriving — a middle-man only ever sees ciphertext.
-- Fernet encryption also verifies message integrity, so a tampered message would fail to decrypt instead of showing corrupted text.
-- The project was built in stages: plain socket chat → encrypted socket chat → encrypted GUI chat, so each layer could be tested before adding the next.
-What's Next
+##  What This Project Proves
 
-- Replace the direct key hand-off with a real post-quantum key exchange (ML-KEM), so the key itself is never sent directly over the network.
-- Add an encrypted file vault.
-- Add password-based login with Argon2id.
-- Add a forensic comparison module (entropy, hash, hex view of plaintext vs. ciphertext.
+- A shared encryption key can be established over an insecure channel *without ever transmitting the key itself*, using a post-quantum key encapsulation mechanism.
+- Messages are encrypted before they leave the sender and decrypted only after arriving — a network eavesdropper only ever sees ciphertext.
+- Fernet's built-in authentication means a tampered message fails to decrypt rather than producing corrupted plaintext.
+- Every transmitted message can be forensically fingerprinted (entropy + hash) and logged for chain-of-custody style analysis — connecting the cryptography work directly to a digital forensics use case.
+
+
+
+##  Threat Model & Known Limitations
+
+- *Harvest-now, decrypt-later*: this project's core motivation — data encrypted with classical-only key exchange today could be decrypted retroactively once large-scale quantum computers exist. Kyber512 mitigates this for the key exchange step.
+- *No authentication yet: the current handshake does not verify *who holds the public key, so it is still vulnerable to an active man-in-the-middle who can intercept the initial exchange. A future version should add digital signatures (e.g., Dilithium/ML-DSA) to authenticate each side.
+- *No forward secrecy across sessions*: a new Kyber keypair is generated per session, but there is no ratcheting within a session.
+- This is an educational/mini-project implementation, not intended for production security use.
+
+
+##  Future Work
+
+- Add authentication via post-quantum digital signatures (ML-DSA / Dilithium) to prevent MITM on the handshake.
+- Hybrid key exchange combining classical ECDH (X25519) with Kyber, derived jointly via HKDF (TLS 1.3-style migration approach).
+- Upgrade symmetric layer to AES-256-GCM or ChaCha20-Poly1305 directly on the derived key.
+- Per-session ephemeral keys with forward secrecy (simplified double-ratchet style).
+- Encrypted file transfer / vault feature.
+- Password-based login with Argon2id.
+- Side-by-side hex dump viewer for plaintext vs. ciphertext in the GUI.
+
+##  Author
+
+Built by Preethi as a hands-on Cyber Security + Digital Forensics learning project, combining post-quantum cryptography with forensic log analysis.
